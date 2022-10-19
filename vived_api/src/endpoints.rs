@@ -1,6 +1,6 @@
 use serde_json::json;
 use serde::Deserialize;
-use vived_modals::{ChannelId, Message};
+use vived_models::{ChannelId, Message};
 
 use crate::Endpoint;
 

@@ -932,7 +932,7 @@ name = "vived"
 version = "0.1.0"
 dependencies = [
  "vived_api",
- "vived_modals",
+ "vived_models",
  "vived_websocket",
 ]
 
@@ -948,11 +948,11 @@ dependencies = [
  "serde_json",
  "tokio",
  "version",
- "vived_modals",
+ "vived_models",
 ]
 
 [[package]]
-name = "vived_modals"
+name = "vived_models"
 version = "0.1.0"
 dependencies = [
  "serde",

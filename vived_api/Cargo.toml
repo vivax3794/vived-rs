@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-vived_modals = {path = "../vived_modals"}
+vived_models = {path = "../vived_models"}
 
 log = {workspace = true}
 futures = {workspace = true, features = ["std"]}

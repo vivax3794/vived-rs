@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "vived_modals",
+    "vived_models",
     "vived_api",
     "vived_websocket",
     "vived",
