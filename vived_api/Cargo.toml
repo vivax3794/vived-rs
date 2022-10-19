@@ -1,0 +1,23 @@
+[package]
+name = "vived_api"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+vived_modals = {path = "../vived_modals"}
+
+log = {workspace = true}
+futures = {workspace = true, features = ["std"]}
+tokio = {workspace = true, features = ["sync"]}
+reqwest = {version = "0.11", features = ["json"]}
+
+serde = {workspace = true, features = ["derive"]}
+serde_json = {workspace = true}
+
+rustc_version_runtime = "0.1.*"
+version = "3.0"
+
+[dev-dependencies]
+tokio = {workspace = true, features = ["rt", "macros"]}

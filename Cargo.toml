@@ -1,0 +1,15 @@
+[workspace]
+members = [
+    "vived_modals",
+    "vived_api",
+    "vived_websocket",
+    "vived",
+    "my_bot"
+]
+
+[workspace.dependencies]
+log = "0.4"
+futures = { version = "0.3", default-features = false}
+tokio = {version = "1.21", default-features = false}
+serde = {version = "1.0"}
+serde_json = "*"
