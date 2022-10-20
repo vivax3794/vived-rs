@@ -5,7 +5,7 @@ use std::sync::Arc;
 use std::{future::Future, time::Duration};
 use tokio::sync::{Notify, RwLock, Semaphore};
 
-use log::{debug, info, trace, warn};
+use log::{error, info, trace, warn};
 
 // Rate limits were hit at 40 req/30 secs, but not o 30 req/30 secs, so we will keep to that!
 /// Number of allowed requests that can happen at once
@@ -79,16 +79,15 @@ pub trait Endpoint<R> {
     /// Create the request that will be sent to api
     fn build(&self, client: &reqwest::Client) -> reqwest::RequestBuilder;
     /// Convert from the raw api response to the needed result
-    /// 
+    ///
     /// # Errors
     /// errors if the raw string cant be parsed into the expected json structure.
-    fn from_raw(raw: String) -> Result<R, serde_json::Error>;
+    fn from_raw(raw: &str) -> Result<R, serde_json::Error>;
 }
-
 
 /// This client handles ratelimiter and errors.
 /// This means that you could just do a while true loop and spam its methods and it will make sure you don't get ratelimited.
-/// THO! sending 100 requests without triggering a ratelimit is gonna take around 90 seconds :P 
+/// THO! sending 100 requests without triggering a ratelimit is gonna take around 90 seconds :P
 /// so like don't if you don't actually need
 #[derive(Debug, Clone)]
 pub struct Client {
@@ -106,12 +105,12 @@ pub struct Client {
 
 impl Client {
     /// Create a new api client using the provided token
-    /// 
+    ///
     /// # Panics
     /// if provided token contains invalid chars
-    /// 
-    /// or if there is an error constructing the reqwest client, which can happen 
-    /// when there is no resolver or tls backend found on the system. 
+    ///
+    /// or if there is an error constructing the reqwest client, which can happen
+    /// when there is no resolver or tls backend found on the system.
     #[must_use]
     pub fn new(token: &str) -> Self {
         let user_agent = format!(
@@ -133,7 +132,9 @@ impl Client {
         let mut headers = reqwest::header::HeaderMap::new();
         headers.insert(
             reqwest::header::AUTHORIZATION,
-            format!("Bearer {token}").parse().expect("Invalid characters in provided token"),
+            format!("Bearer {token}")
+                .parse()
+                .expect("Invalid characters in provided token"),
         );
 
         let client = reqwest::Client::builder()
@@ -255,7 +256,12 @@ impl Client {
 
             if status.is_success() {
                 let content = res.text().await.expect("response data was not valid text");
-                E::from_raw(content).map_err(ApiError::from).into()
+                E::from_raw(&content)
+                    .map_err(|err| {
+                        error!("RESPONSE BODY: {}", content);
+                        err.into()
+                    })
+                    .into()
             } else if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
                 if let Some(wait_amount) = res.headers().get("Retry-After") {
                     let wait_amount = wait_amount
@@ -277,7 +283,7 @@ impl Client {
                 ApiResultAction::Return(Err(match serde_json::from_str::<GuildedError>(&content) {
                     Ok(error) => ApiError::Guilded(error),
                     Err(error) => {
-                        debug!("RESPONSE BODY: {}", content);
+                        error!("RESPONSE BODY: {}", content);
                         ApiError::JsonError(error)
                     }
                 }))

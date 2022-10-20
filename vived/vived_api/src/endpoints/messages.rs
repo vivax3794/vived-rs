@@ -47,13 +47,13 @@ impl Endpoint<Message> for MessageCreate {
             }))
     }
 
-    fn from_raw(raw: String) -> Result<Message, serde_json::Error> {
+    fn from_raw(raw: &str) -> Result<Message, serde_json::Error> {
         /// Response from the message create endpoint
         #[derive(Deserialize, Debug)]
         struct MessageCreateResponse {
             /// Message that was created
             message: Message,
         }
-        serde_json::from_str::<MessageCreateResponse>(&raw).map(|resp| resp.message)
+        serde_json::from_str::<MessageCreateResponse>(raw).map(|resp| resp.message)
     }
 }
