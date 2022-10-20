@@ -9,6 +9,8 @@ use crate::Endpoint;
 /// Base url of the guilded api endpoints
 const BASE_URL: &str = "https://www.guilded.gg/api/v1";
 
+// TODO: implement embed, private, silent, and reply_message_ids
+
 /// Send a message
 #[derive(Debug)]
 #[must_use]
