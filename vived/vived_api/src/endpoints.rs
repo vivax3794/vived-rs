@@ -55,6 +55,6 @@ impl Endpoint<Message> for MessageCreate {
             /// Message that was created
             message: Message,
         }
-        Ok(serde_json::from_str::<MessageCreateResponse>(&raw)?.message)
+        serde_json::from_str::<MessageCreateResponse>(&raw).map(|resp| resp.message)
     }
 }
