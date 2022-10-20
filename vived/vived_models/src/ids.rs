@@ -1,5 +1,13 @@
+//! Ids are used to identify specific resources on Guilded
+
+
+// We dont really need docs for each specific id
+#![allow(missing_docs)]
+
 use serde::Deserialize;
 
+/// Define the ids used in the guilded api
+/// They all consist of strings 
 macro_rules! define_ids {
     ($($id:ident),*) => {
         $(
@@ -22,8 +30,7 @@ macro_rules! define_ids {
     };
 }
 
-pub struct TestId(String);
-
 define_ids!(
-    ServerId, ChannelId
+    ServerId,
+    ChannelId
 );

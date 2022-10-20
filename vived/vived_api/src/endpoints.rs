@@ -1,17 +1,25 @@
+//! Implement different guilded api endpoints
+
 use serde_json::json;
 use serde::Deserialize;
 use vived_models::{ChannelId, Message};
 
 use crate::Endpoint;
 
+/// Base url of the guilded api endpoints
 const BASE_URL: &str = "https://www.guilded.gg/api/v1";
 
+/// Send a message
+#[derive(Debug)]
 pub struct MessageCreate {
+    /// Content to send
     content: Option<String>,
+    /// Channel to send in 
     channel: ChannelId,
 }
 
 impl MessageCreate {
+    /// Create a new message create instruction for the given channel.
     #[must_use]
     pub fn new(channel: ChannelId) -> Self {
         Self {
@@ -20,6 +28,7 @@ impl MessageCreate {
         }
     }
 
+    /// Send a message with the given content
     #[must_use]
     pub fn with_content(mut self, content: &str) -> Self {
         self.content = Some(content.to_owned());
@@ -27,20 +36,15 @@ impl MessageCreate {
     }
 }
 
+/// Response from the message create endpoint, this is parsed internally
 #[derive(Deserialize, Debug)]
-pub struct MessageCreateResponse {
-    pub message: Message
+struct MessageCreateResponse {
+    /// Message that was created
+    message: Message
 }
 
-impl std::ops::Deref for MessageCreateResponse {
-    type Target = Message;
 
-    fn deref(&self) -> &Self::Target {
-        &self.message
-    }
-}
-
-impl Endpoint<MessageCreateResponse> for MessageCreate {
+impl Endpoint<Message> for MessageCreate {
     fn build(&self, client: &reqwest::Client) -> reqwest::RequestBuilder {
         client
             .post(format!(
@@ -50,5 +54,9 @@ impl Endpoint<MessageCreateResponse> for MessageCreate {
             .json(&json!({
                 "content": self.content
             }))
+    }
+
+    fn from_raw(raw: String) -> Result<Message, serde_json::Error> {
+        Ok(serde_json::from_str::<MessageCreateResponse>(&raw)?.message)
     }
 }
