@@ -1,10 +1,7 @@
 [workspace]
 members = [
-    "vived_models",
-    "vived_api",
-    "vived_websocket",
-    "vived",
-    "my_bot"
+    "bot",
+    "vived/*"
 ]
 
 [workspace.dependencies]

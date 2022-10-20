@@ -1,12 +1,12 @@
 [package]
-name = "my_bot"
+name = "bot"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-vived = {path = "../vived"}
-tokio = {workspace = true, features = ["macros", "rt-multi-thread", "rt"]}
+vived = {path = "../vived/vived"}
+tokio = {version = "*", features = ["macros", "rt-multi-thread", "rt"]}
 
 env_logger = "0.9"
