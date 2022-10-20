@@ -7,3 +7,5 @@ edition = "2021"
 
 [dependencies]
 serde = {workspace = true}
+chrono = {version = "0.4", default-features = false, features = ["serde"]}
+readonly = "0.2"

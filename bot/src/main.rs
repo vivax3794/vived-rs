@@ -9,8 +9,14 @@ async fn main() {
 
     let client = Client::new(TOKEN);
 
-    client
-        .make_request(MessageCreate::new(TEST_CHANNEL_ID.into()).with_content("hello world".into()))
+    // Send startup message to server
+    let resulting_message = client
+        .make_request(
+            MessageCreate::new(TEST_CHANNEL_ID.to_owned().into())
+                .with_content("I am online".into()),
+        )
         .await
         .unwrap();
+    
+    dbg!(resulting_message);
 }

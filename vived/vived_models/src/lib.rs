@@ -34,11 +34,18 @@
     clippy::unseparated_literal_suffix,
     clippy::unwrap_in_result,
 )]
+#![allow(
+    clippy::module_name_repetitions
+)]
 
 //! Contains common data types for the vived libraries
 
 pub mod message;
 pub mod ids;
+pub mod embed;
+pub mod color;
 
 pub use message::Message;
+pub use embed::Embed;
+pub use color::Color;
 pub use ids::*;

@@ -8,12 +8,11 @@ use serde::Deserialize;
 
 /// Define the ids used in the guilded api
 /// They all consist of strings 
-macro_rules! define_ids {
-    ($($id:ident),*) => {
-        $(
-            #[derive(Debug, Deserialize, Eq, PartialEq)]
+macro_rules! define_id {
+    (pub struct  $id:ident($ty:path)) => {
+            #[derive(Debug, Deserialize, Clone, Eq, PartialEq)]
             #[serde(transparent)]
-            pub struct $id(String);
+            pub struct $id($ty);
 
             impl ::std::fmt::Display for $id {
                 fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -21,16 +20,21 @@ macro_rules! define_ids {
                 }
             }
 
-            impl ::std::convert::From<&str> for $id {
-                fn from(id: &str) -> Self {
-                    Self(id.to_owned())
+            impl ::std::convert::From<$ty> for $id {
+                fn from(id: $ty) -> Self {
+                    Self(id)
                 }
             }
-        )*
     };
 }
 
-define_ids!(
-    ServerId,
-    ChannelId
-);
+define_id!(pub struct ServerId(String));
+define_id!(pub struct ChannelId(String));
+define_id!(pub struct MessageId(String));
+define_id!(pub struct UserId(String));
+define_id!(pub struct WebhookId(String));
+define_id!(pub struct RoleId(usize));
+
+// We cant do this in the macro as not every id can implement copy
+// so we just mark it as copy here
+impl Copy for RoleId {}
