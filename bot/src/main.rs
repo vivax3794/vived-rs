@@ -13,7 +13,7 @@ async fn main() {
         client
             .make_request(
                 MessageCreate::new(TEST_CHANNEL_ID.into())
-                    .with_content("Hello World"),
+                    .with_content("Hello World".to_owned()),
             )
             .await
             .unwrap();

@@ -30,8 +30,8 @@ impl MessageCreate {
 
     /// Send a message with the given content
     #[must_use]
-    pub fn with_content(mut self, content: &str) -> Self {
-        self.content = Some(content.to_owned());
+    pub fn with_content(mut self, content: String) -> Self {
+        self.content = Some(content);
         self
     }
 }
