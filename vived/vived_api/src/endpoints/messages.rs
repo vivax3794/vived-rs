@@ -11,6 +11,7 @@ const BASE_URL: &str = "https://www.guilded.gg/api/v1";
 
 /// Send a message
 #[derive(Debug)]
+#[must_use]
 pub struct MessageCreate {
     /// Content to send
     content: Option<String>,
@@ -20,7 +21,6 @@ pub struct MessageCreate {
 
 impl MessageCreate {
     /// Create a new message create instruction for the given channel.
-    #[must_use]
     pub fn new(channel: ChannelId) -> Self {
         Self {
             channel,
@@ -29,7 +29,6 @@ impl MessageCreate {
     }
 
     /// Send a message with the given content
-    #[must_use]
     pub fn with_content(mut self, content: String) -> Self {
         self.content = Some(content);
         self
