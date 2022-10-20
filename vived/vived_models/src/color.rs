@@ -1,6 +1,6 @@
 //! Who doesn't like colors?
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::IntoDeserializer};
 
 // the guilded api uses colors using u32
 
@@ -24,21 +24,19 @@ impl From<Color> for (u8, u8, u8) {
 
 impl From<u32> for Color {
     // This is safe because of the bit shifting and bitwise and operations
-    #[allow(clippy::as_conversions)]
     fn from(v: u32) -> Self {
         Self(
-            ((v >> 16) & 0xFF) as u8,
-            ((v >> 8) & 0xFF) as u8,
-            (v & 0xFF) as u8,
+            ((v >> 16) & 0xFF).try_into().expect("u32 to u8 failed"),
+            ((v >> 8) & 0xFF).try_into().expect("u32 to u8 failed"),
+            (v & 0xFF).try_into().expect("u32 to u8 failed"),
         )
     }
 }
 
 impl From<Color> for u32 {
     // This is safe because of the bit shifting and bitwise and operations
-    #[allow(clippy::as_conversions)]
     fn from(Color(r, g, b): Color) -> Self {
-        (r as u32) << 16 | (g as u32) << 8 | b as u32
+        u32::from(r) << 16 | u32::from(g) << 8 | u32::from(b)
     }
 }
 
