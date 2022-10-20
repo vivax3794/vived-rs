@@ -1,7 +1,7 @@
 //! Implement different guilded api endpoints
 
-use serde_json::json;
 use serde::Deserialize;
+use serde_json::json;
 use vived_models::{ChannelId, Message};
 
 use crate::Endpoint;
@@ -14,7 +14,7 @@ const BASE_URL: &str = "https://www.guilded.gg/api/v1";
 pub struct MessageCreate {
     /// Content to send
     content: Option<String>,
-    /// Channel to send in 
+    /// Channel to send in
     channel: ChannelId,
 }
 
@@ -36,14 +36,6 @@ impl MessageCreate {
     }
 }
 
-/// Response from the message create endpoint, this is parsed internally
-#[derive(Deserialize, Debug)]
-struct MessageCreateResponse {
-    /// Message that was created
-    message: Message
-}
-
-
 impl Endpoint<Message> for MessageCreate {
     fn build(&self, client: &reqwest::Client) -> reqwest::RequestBuilder {
         client
@@ -57,6 +49,12 @@ impl Endpoint<Message> for MessageCreate {
     }
 
     fn from_raw(raw: String) -> Result<Message, serde_json::Error> {
+        /// Response from the message create endpoint
+        #[derive(Deserialize, Debug)]
+        struct MessageCreateResponse {
+            /// Message that was created
+            message: Message,
+        }
         Ok(serde_json::from_str::<MessageCreateResponse>(&raw)?.message)
     }
 }
