@@ -1,6 +1,6 @@
 //! Who doesn't like colors?
 
-use serde::{Deserialize, Serialize, de::IntoDeserializer};
+use serde::{Deserialize, Serialize};
 
 // the guilded api uses colors using u32
 
