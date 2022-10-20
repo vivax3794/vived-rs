@@ -1,4 +1,4 @@
-//! Ratelimiting and error handling client
+//! Ratelimiter and error handling client
 
 use serde::Deserialize;
 use std::sync::Arc;
@@ -13,14 +13,14 @@ const CONCURRENT_REQUEST: usize = 30;
 /// How many seconds should the request permit be locked down after a request
 const LOCK_HOLD_DURATION: u64 = 30;
 
-/// What action should the ratelimiting code take based on the result of the api call
+/// What action should the ratelimiter code take based on the result of the api call
 enum ApiResultAction<R> {
     /// Return the given value to the caller
     /// (This might actually either be a Ok() or Err())
     Return(R),
     /// Activate ratelimit lock and  retry after the specified seconds
     RetryAfter(u64),
-    /// Active ratelimit lock and rety with exponential backoff
+    /// Active ratelimit lock and retry with exponential backoff
     RetryWithBackoff,
 }
 
@@ -29,7 +29,7 @@ enum ApiResultAction<R> {
 pub struct GuildedError {
     /// Error code
     pub code: String,
-    /// Message detalinig the error
+    /// Message detailing the error
     pub message: String,
     /// this information is based on the specific error, and contains additional information
     pub meta: Option<serde_json::Value>,
@@ -38,12 +38,12 @@ pub struct GuildedError {
 /// An error that can be produced during the course of making a request
 #[derive(Debug)]
 pub enum ApiError {
-    /// The library does not have a secific case for this error
+    /// The library does not have a specific case for this error
     Unknown(reqwest::Error),
-    /// And error occured with parsing the returned json data
+    /// And error occurred with parsing the returned json data
     /// This will also produce a `debug` log with the raw content data
     JsonError(serde_json::Error),
-    /// A error occured and guilded provided us with a nice explanation
+    /// A error occurred and guilded provided us with a nice explanation
     Guilded(GuildedError),
 }
 
@@ -73,8 +73,8 @@ impl<R> From<R> for ApiResultAction<R> {
 
 /// An endpoint details to the client how to perform an action
 /// # Note
-/// You shouldnt need to implement this your self, you can if there are new routes that we dont support yet
-/// But hopeflly we should get to it soon enough
+/// You shouldn't need to implement this your self, you can if there are new routes that we don't support yet
+/// But hopefully we should get to it soon enough
 pub trait Endpoint<R> {
     /// Create the request that will be sent to api
     fn build(&self, client: &reqwest::Client) -> reqwest::RequestBuilder;
@@ -86,10 +86,10 @@ pub trait Endpoint<R> {
 }
 
 
-/// This client handles ratelimiting and errors.
-/// This means that you could just do a while true loop and spam its methods and it will make sure you dont get ratelimited.
-/// THO! sending 100 requests without trigring a ratelimit is gonna take around 90 seconds :P 
-/// so like dont if you dont actually need
+/// This client handles ratelimiter and errors.
+/// This means that you could just do a while true loop and spam its methods and it will make sure you don't get ratelimited.
+/// THO! sending 100 requests without triggering a ratelimit is gonna take around 90 seconds :P 
+/// so like don't if you don't actually need
 #[derive(Debug, Clone)]
 pub struct Client {
     /// The `reqwest` client to use
@@ -110,7 +110,7 @@ impl Client {
     /// # Panics
     /// if provided token contains invalid chars
     /// 
-    /// or if there is an error constructing the reqwest clinet, which can happen 
+    /// or if there is an error constructing the reqwest client, which can happen 
     /// when there is no resolver or tls backend found on the system. 
     #[must_use]
     pub fn new(token: &str) -> Self {
@@ -122,18 +122,18 @@ impl Client {
 
         info!("using User-Agent: {}", user_agent);
         info!(
-            "RATELIMITING SETTINGS: max concurrent requests: {}",
+            "RATELIMITER SETTINGS: max concurrent requests: {}",
             CONCURRENT_REQUEST
         );
         info!(
-            "RATELIMITING SETTINGS: lock hold time: {} seconds",
+            "RATELIMITER SETTINGS: lock hold time: {} seconds",
             LOCK_HOLD_DURATION
         );
 
         let mut headers = reqwest::header::HeaderMap::new();
         headers.insert(
             reqwest::header::AUTHORIZATION,
-            format!("Bearer {token}").parse().expect("Invalid characthers in provided token"),
+            format!("Bearer {token}").parse().expect("Invalid characters in provided token"),
         );
 
         let client = reqwest::Client::builder()
@@ -159,7 +159,7 @@ impl Client {
     {
         // if ratelimit lock is in effect wait until it is released
         if *self.ratelimit_lock_active.read().await {
-            warn!("RATELIMITING LOCK IS IN EFFECT, blocking request until ratelimit is released");
+            warn!("RATELIMITER LOCK IS IN EFFECT, blocking request until ratelimit is released");
             Arc::clone(&self.ratelimit_unlocked_notification)
                 .notified()
                 .await;
@@ -172,7 +172,7 @@ impl Client {
         let permit = Arc::clone(&self.sem)
             .acquire_owned()
             .await
-            .expect("Ratelimiting semapore has been closed unexpectdly");
+            .expect("Ratelimiter semaphore has been closed unexpectedly");
 
         let mut backoff_amount: u64 = 20;
         let mut ratelimit_lock_activated_by_us: bool = false;
@@ -234,7 +234,7 @@ impl Client {
     /// If there is a connection error or an error parsing the return json data
     ///
     /// # Panics
-    /// If a ratelimit is hit and the "Rety-After" header is mallformed
+    /// If a ratelimit is hit and the "Retry-After" header is malformed
     pub async fn make_request<'a, E, R>(&self, builder: E) -> Result<R, ApiError>
     where
         E: Endpoint<R>,
@@ -268,7 +268,7 @@ impl Client {
                     ApiResultAction::RetryWithBackoff
                 }
             } else {
-                // we could use the .json method, but we want access to the hole content in the event it isnt json
+                // we could use the .json method, but we want access to the hole content in the event it isn't json
                 // (or our json scheme just isn't valid)
                 let content = res
                     .text()

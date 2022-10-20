@@ -1,7 +1,7 @@
 //! Ids are used to identify specific resources on Guilded
 
 
-// We dont really need docs for each specific id
+// We don't really need docs for each specific id
 #![allow(missing_docs)]
 
 use serde::Deserialize;
