@@ -1,4 +1,4 @@
-//! Implement different guilded api endpoints
+//! <https://www.guilded.gg/docs/api/chat/ChatMessage>
 
 use serde::Deserialize;
 use serde_json::json;

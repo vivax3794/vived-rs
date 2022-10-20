@@ -9,13 +9,8 @@ async fn main() {
 
     let client = Client::new(TOKEN);
 
-    for _ in 0..10 {
-        client
-            .make_request(
-                MessageCreate::new(TEST_CHANNEL_ID.into())
-                    .with_content("Hello World".to_owned()),
-            )
-            .await
-            .unwrap();
-    }
+    client
+        .make_request(MessageCreate::new(TEST_CHANNEL_ID.into()).with_content("hello world".into()))
+        .await
+        .unwrap();
 }
