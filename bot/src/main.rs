@@ -9,11 +9,10 @@ async fn main() {
 
     let client = Client::new(TOKEN);
 
-    // Send startup message to server
+    // Send startup embed message
     let resulting_message = client
         .make_request(
             MessageCreate::new(TEST_CHANNEL_ID)
-                .with_content("I am online".into()),
         )
         .await
         .unwrap();

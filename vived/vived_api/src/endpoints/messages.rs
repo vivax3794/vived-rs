@@ -2,7 +2,7 @@
 
 use serde::Deserialize;
 use serde_json::json;
-use vived_models::{ChannelId, Message};
+use vived_models::{ChannelId, Message, Embed};
 
 use crate::Endpoint;
 
@@ -19,6 +19,8 @@ pub struct MessageCreate {
     content: Option<String>,
     /// Channel to send in
     channel: ChannelId,
+    /// Embeds to send
+    embeds: Option<Vec<Embed>>,
 }
 
 impl MessageCreate {
@@ -27,12 +29,20 @@ impl MessageCreate {
         Self {
             channel: channel.into(),
             content: None,
+            embeds: None,
         }
     }
 
     /// Send a message with the given content
     pub fn with_content(mut self, content: String) -> Self {
         self.content = Some(content);
+        self
+    }
+
+    /// Send a message with the given embeds
+    /// Currently only supports one embed, in the future a `with_embeds` method will be added
+    pub fn with_embed(mut self, embed: Embed) -> Self {
+        self.embeds = Some(vec![embed]);
         self
     }
 }
@@ -45,7 +55,8 @@ impl Endpoint<Message> for MessageCreate {
                 id = self.channel
             ))
             .json(&json!({
-                "content": self.content
+                "content": self.content,
+                "embeds": self.embeds,
             }))
     }
 
