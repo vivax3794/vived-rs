@@ -13,7 +13,7 @@ async fn main() {
     let resulting_message = client
         .make_request(
             MessageCreate::new(TEST_CHANNEL_ID)
-                .with_embed(
+                .embed(
                     vived::Embed::new()
                         // .title("Hello, world!")
                         // .description("This is a test embed")
