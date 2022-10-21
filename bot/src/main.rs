@@ -12,7 +12,7 @@ async fn main() {
     // Send startup message to server
     let resulting_message = client
         .make_request(
-            MessageCreate::new(TEST_CHANNEL_ID.to_owned().into())
+            MessageCreate::new(TEST_CHANNEL_ID)
                 .with_content("I am online".into()),
         )
         .await

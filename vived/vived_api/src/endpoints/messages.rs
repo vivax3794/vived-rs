@@ -23,9 +23,9 @@ pub struct MessageCreate {
 
 impl MessageCreate {
     /// Create a new message create instruction for the given channel.
-    pub fn new(channel: ChannelId) -> Self {
+    pub fn new<I: Into<ChannelId>>(channel: I) -> Self {
         Self {
-            channel,
+            channel: channel.into(),
             content: None,
         }
     }

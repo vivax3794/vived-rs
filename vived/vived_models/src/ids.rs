@@ -4,15 +4,15 @@
 // We don't really need docs for each specific id
 #![allow(missing_docs)]
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// Define the ids used in the guilded api
 /// They all consist of strings 
-macro_rules! define_id {
-    (pub struct  $id:ident($ty:path)) => {
-            #[derive(Debug, Deserialize, Clone, Eq, PartialEq)]
+macro_rules! define_string_id {
+    (pub struct  $id:ident(String)) => {
+            #[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq)]
             #[serde(transparent)]
-            pub struct $id($ty);
+            pub struct $id(pub String);
 
             impl ::std::fmt::Display for $id {
                 fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -20,21 +20,42 @@ macro_rules! define_id {
                 }
             }
 
-            impl ::std::convert::From<$ty> for $id {
-                fn from(id: $ty) -> Self {
+            impl ::std::convert::From<String> for $id {
+                fn from(id: String) -> Self {
                     Self(id)
+                }
+            }
+            
+            impl ::std::convert::From<&str> for $id {
+                fn from(id: &str) -> Self {
+                    Self(id.to_owned())
                 }
             }
     };
 }
 
-define_id!(pub struct ServerId(String));
-define_id!(pub struct ChannelId(String));
-define_id!(pub struct MessageId(String));
-define_id!(pub struct UserId(String));
-define_id!(pub struct WebhookId(String));
-define_id!(pub struct RoleId(usize));
+define_string_id!(pub struct ServerId(String));
+define_string_id!(pub struct ChannelId(String));
+define_string_id!(pub struct MessageId(String));
+define_string_id!(pub struct UserId(String));
+define_string_id!(pub struct WebhookId(String));
 
-// We cant do this in the macro as not every id can implement copy
-// so we just mark it as copy here
-impl Copy for RoleId {}
+// For some reason RoleId uses a `usize` instead of a String
+// So we need to special case it
+
+/// A role id
+#[derive(Debug, Serialize, Deserialize, Clone, Copy, Eq, PartialEq)]
+#[serde(transparent)]
+pub struct RoleId(pub usize);
+
+impl ::std::fmt::Display for RoleId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl ::std::convert::From<usize> for RoleId {
+    fn from(id: usize) -> Self {
+        Self(id)
+    }
+}
