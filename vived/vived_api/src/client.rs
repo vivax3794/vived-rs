@@ -5,7 +5,7 @@ use std::sync::Arc;
 use std::{future::Future, time::Duration};
 use tokio::sync::{Notify, RwLock, Semaphore};
 
-use log::{error, info, trace, warn};
+use log::{debug, error, info, trace, warn};
 
 // Rate limits were hit at 40 req/30 secs, but not o 30 req/30 secs, so we will keep to that!
 /// Number of allowed requests that can happen at once
@@ -244,19 +244,19 @@ impl Client {
             let client = self.client.read().await;
             let request = builder.build(&client).build().expect("invalid request");
 
-            let body_bytes = request
-                .body()
-                .expect("should have body")
-                .as_bytes()
-                .expect("expected bytes");
-            let body_string = String::from_utf8_lossy(body_bytes);
+            debug!("making request");
+            trace!("URL: {}", request.url());
+            trace!("METHOD: {}", request.method());
+            trace!("HEADERS: {:#?}", request.headers());
 
-            trace!(
-                "making request:\nURL: {}\nHEADERS: {:#?}\nBODY: {}",
-                request.url(),
-                request.headers(),
-                body_string
-            );
+            if let Some(body) = request
+                .body()
+                .and_then(reqwest::Body::as_bytes)
+            {
+                trace!("BODY: {}", String::from_utf8_lossy(body));
+            } else {
+                trace!("NO VALID BODY");
+            }
 
             let res = client.execute(request).await;
 

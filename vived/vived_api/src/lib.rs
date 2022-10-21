@@ -34,6 +34,7 @@
     clippy::unseparated_literal_suffix,
     clippy::unwrap_in_result,
 )]
+#![allow(clippy::module_name_repetitions)]
 
 //! Interact with the guiled api!
 

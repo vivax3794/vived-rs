@@ -1106,6 +1106,7 @@ dependencies = [
 name = "vived_api"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "futures",
  "log",
  "reqwest",

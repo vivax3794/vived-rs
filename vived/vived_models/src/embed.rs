@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct EmbedFooter {
     /// Icon of the footer
+    #[serde(default)]
     pub icon_url: Option<String>,
     /// Text of the footer
     pub text: String,
@@ -42,28 +43,24 @@ impl From<&str> for EmbedFooter {
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct EmbedImage {
     /// Url of the thumbnail
-    pub url: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default)]
+    pub url: Option<String>,
 }
 
 // lets make it convenient to construct an embed image and grab the string
 impl From<String> for EmbedImage {
     fn from(url: String) -> Self {
-        Self { url }
+        Self { url: Some(url) }
     }
 }
 
 impl From<&str> for EmbedImage {
     fn from(v: &str) -> Self {
-        Self { url: v.to_owned() }
+        Self { url: Some(v.to_owned()) }
     }
 }
 
-// lets make this just return the internal url
-impl std::fmt::Display for EmbedImage {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.url.fmt(f)
-    }
-}
 
 /// Embed Author
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
@@ -71,8 +68,10 @@ pub struct EmbedAuthor {
     /// Name of the author
     pub name: String,
     /// Url of the author
+    #[serde(default)]
     pub url: Option<String>,
     /// Icon of the author
+    #[serde(default)]
     pub icon_url: Option<String>,
 }
 
@@ -174,6 +173,7 @@ impl EmbedField {
 /// ```
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
 #[serde(rename_all = "camelCase")]
+#[serde(default)]
 pub struct Embed {
     /// The title of the embed
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -195,11 +195,11 @@ pub struct Embed {
     pub timestamp: Option<chrono::DateTime<chrono::Utc>>,
 
     /// Thumbnail of the embed
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub thumbnail: Option<EmbedImage>,
+    #[serde(default)]
+    pub thumbnail: EmbedImage,
     /// Image of the embed
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub image: Option<EmbedImage>,
+    #[serde(default)]
+    pub image: EmbedImage,
 
     /// Embed Author
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -263,14 +263,14 @@ impl Embed {
     /// Set the thumbnail of the embed
     #[must_use]
     pub fn thumbnail(mut self, thumbnail: impl Into<EmbedImage>) -> Self {
-        self.thumbnail = Some(thumbnail.into());
+        self.thumbnail = thumbnail.into();
         self
     }
 
     /// Set the image of the embed
     #[must_use]
     pub fn image(mut self, image: impl Into<EmbedImage>) -> Self {
-        self.image = Some(image.into());
+        self.image = image.into();
         self
     }
 
