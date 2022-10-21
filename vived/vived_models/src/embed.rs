@@ -28,7 +28,7 @@ impl From<&str> for EmbedImage {
 // lets make this just return the internal url
 impl std::fmt::Display for EmbedImage {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.url)
+        self.url.fmt(f)
     }
 }
 
