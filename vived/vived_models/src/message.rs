@@ -148,3 +148,12 @@ pub struct Message {
     #[serde(flatten)]
     pub created_by: CreatedByRawFields,
 }
+
+// You should be able to construct ids from the objects
+// Because it makes the api much nicer!
+
+impl From<Message> for crate::MessageId {
+    fn from(v: Message) -> Self {
+        v.id
+    }
+}
