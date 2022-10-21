@@ -1,12 +1,10 @@
 #![warn(
     missing_copy_implementations,
-    missing_debug_implementations,
     missing_docs,
     clippy::pedantic,
     clippy::missing_docs_in_private_items,
     clippy::dbg_macro,
     clippy::decimal_literal_representation,
-    clippy::as_conversions,
     clippy::float_cmp_const,
     clippy::if_then_some_else_none,
     clippy::clone_on_ref_ptr,
@@ -18,7 +16,7 @@
     clippy::print_stderr,
     clippy::print_stdout,
     clippy::todo,
-    clippy::unimplemented,
+    clippy::unimplemented
 )]
 #![deny(
     // clippy::expect_used,
@@ -41,4 +39,4 @@
 mod client;
 pub mod endpoints;
 
-pub use client::{Endpoint, Client, ApiError, GuildedError};
+pub use client::{ApiError, Client, Endpoint, GuildedError};

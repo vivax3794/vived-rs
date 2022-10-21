@@ -12,7 +12,7 @@ const BASE_URL: &str = "https://www.guilded.gg/api/v1";
 
 
 /// Arguments passed as json to the guilded api
-#[derive(Serialize, Debug, Clone, Default)]
+#[derive(Serialize, Default)]
 pub struct MessageCreateArguments {
     /// Content to send
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -34,7 +34,6 @@ pub struct MessageCreateArguments {
 }
 
 /// Send a message
-#[derive(Debug)]
 #[must_use]
 pub struct MessageCreate {
     /// Channel to send in
@@ -139,7 +138,7 @@ impl Endpoint<Message> for MessageCreate {
 
 
 /// Json arguments for `ChannelGetMessages`
-#[derive(Debug, Serialize, Clone)]
+#[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct ChannelGetMessagesArguments {
     /// before
@@ -166,7 +165,6 @@ impl Default for ChannelGetMessagesArguments {
 }
 
 /// Get a list of recent messages in a channel
-#[derive(Debug)]
 #[must_use]
 pub struct ChannelGetMessages {
     /// Channel to get messages from
@@ -241,7 +239,6 @@ impl Endpoint<Vec<Message>> for ChannelGetMessages {
 
 
 /// Get specific message in a channel
-#[derive(Debug)]
 #[must_use]
 pub struct ChannelGetMessage {
     /// Channel to get message from
@@ -283,7 +280,7 @@ impl Endpoint<Message> for ChannelGetMessage {
 }
 
 /// Edit message json arguments
-#[derive(Debug, Serialize, Clone, Default)]
+#[derive(Serialize, Default)]
 #[serde(rename_all = "camelCase")]
 struct MessageEditArguments {
     /// Message content
@@ -296,7 +293,6 @@ struct MessageEditArguments {
 
 
 /// Edit a message
-#[derive(Debug)]
 #[must_use]
 pub struct MessageEdit {
     /// Channel to edit message in

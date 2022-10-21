@@ -95,12 +95,6 @@ pub struct Client {
     client: RwLock<reqwest::Client>,
     /// This is used to keep the number of concurrent tasks within a specific amount
     sem: Arc<Semaphore>,
-    /// Has a ratelimit been hit?
-    /// if it has wait!
-    ratelimit_lock_active: Arc<RwLock<bool>>,
-    /// Listen for this notify when a ratelimit is in effect
-    /// its activation signals the all clear to continue requests
-    ratelimit_unlocked_notification: Arc<Notify>,
 }
 
 impl Client {
@@ -146,8 +140,6 @@ impl Client {
         Self {
             sem: Arc::new(Semaphore::new(CONCURRENT_REQUEST)),
             client: RwLock::new(client),
-            ratelimit_lock_active: Arc::new(RwLock::new(false)),
-            ratelimit_unlocked_notification: Arc::new(Notify::new()),
         }
     }
 
@@ -158,25 +150,14 @@ impl Client {
         C: Fn() -> F,
         F: Future<Output = ApiResultAction<R>>,
     {
-        // if ratelimit lock is in effect wait until it is released
-        if *self.ratelimit_lock_active.read().await {
-            warn!("RATELIMITER LOCK IS IN EFFECT, blocking request until ratelimit is released");
-            Arc::clone(&self.ratelimit_unlocked_notification)
-                .notified()
-                .await;
-        }
-
-        trace!("getting permit to make request");
-        if self.sem.available_permits() == 0 {
-            warn!("All permits used, will now wait for other requests to exit lock period");
-        }
         let permit = Arc::clone(&self.sem)
             .acquire_owned()
             .await
             .expect("Ratelimiter semaphore has been closed unexpectedly");
 
         let mut backoff_amount: u64 = 20;
-        let mut ratelimit_lock_activated_by_us: bool = false;
+
+        let mut lockdown_permits = None;
 
         let result = loop {
             match closure().await {
@@ -187,8 +168,12 @@ impl Client {
                         wait_amount
                     );
 
-                    *self.ratelimit_lock_active.write().await = true;
-                    ratelimit_lock_activated_by_us = true;
+                    lockdown_permits = Some(
+                        Arc::clone(&self.sem)
+                            .acquire_many_owned(self.sem.available_permits() as u32)
+                            .await
+                            .expect("Ratelimiter semaphore has been closed unexpectedly"),
+                    );
 
                     tokio::time::sleep(Duration::from_secs(wait_amount)).await;
                 }
@@ -198,18 +183,21 @@ impl Client {
                         backoff_amount
                     );
 
-                    *self.ratelimit_lock_active.write().await = true;
-                    ratelimit_lock_activated_by_us = true;
+                    lockdown_permits = Some(
+                        Arc::clone(&self.sem)
+                            .acquire_many_owned(self.sem.available_permits() as u32)
+                            .await
+                            .expect("Ratelimiter semaphore has been closed unexpectedly")
+                    );
 
                     tokio::time::sleep(Duration::from_secs(backoff_amount)).await;
                     backoff_amount *= 2;
                 }
             }
         };
-        // if this task has activated the ratelimit lock it needs to release it
-        if ratelimit_lock_activated_by_us {
-            *self.ratelimit_lock_active.write().await = false;
-            self.ratelimit_unlocked_notification.notify_waiters();
+
+        if let Some(permits) = lockdown_permits {
+            permits.forget();
         }
 
         // Make permit last longer than the call so we don't get requests too quickly
@@ -249,10 +237,7 @@ impl Client {
             trace!("METHOD: {}", request.method());
             trace!("HEADERS: {:#?}", request.headers());
 
-            if let Some(body) = request
-                .body()
-                .and_then(reqwest::Body::as_bytes)
-            {
+            if let Some(body) = request.body().and_then(reqwest::Body::as_bytes) {
                 trace!("BODY: {}", String::from_utf8_lossy(body));
             } else {
                 trace!("NO VALID BODY");

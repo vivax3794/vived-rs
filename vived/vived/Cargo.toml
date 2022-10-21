@@ -7,5 +7,11 @@ edition = "2021"
 
 [dependencies]
 vived_models = {path = "../vived_models"}
-vived_api = {path = "../vived_api"}
-vived_websocket = {path = "../vived_websocket"}
+vived_api = {path = "../vived_api", optional = true}
+vived_websocket = {path = "../vived_websocket", optional = true}
+
+
+[features]
+default = ["api", "websocket"]
+api = ["dep:vived_api"]
+websocket = ["dep:vived_websocket"]

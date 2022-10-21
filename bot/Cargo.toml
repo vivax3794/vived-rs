@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 vived = {path = "../vived/vived"}
-tokio = {version = "*", features = ["macros", "rt-multi-thread", "rt"]}
+tokio = {version = "*", features = ["macros", "rt-multi-thread", "rt", "time"]}
 
 env_logger = "0.9"
-chrono = "0.4"
+

@@ -6,3 +6,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+tokio-tungstenite = "0.17"
+httparse = "1.8"
+tokio-tungstenite-keepalive = "0.1.0"
