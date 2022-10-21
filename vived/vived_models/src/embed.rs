@@ -11,6 +11,15 @@ pub struct EmbedFooter {
     pub text: String,
 }
 
+impl EmbedFooter {
+    /// Set icon url
+    #[must_use]
+    pub fn icon_url(mut self, icon_url: impl Into<String>) -> Self {
+        self.icon_url = Some(icon_url.into());
+        self
+    }
+}
+
 impl From<String> for EmbedFooter {
     fn from(text: String) -> Self {
         Self {
@@ -67,6 +76,42 @@ pub struct EmbedAuthor {
     pub icon_url: Option<String>,
 }
 
+impl EmbedAuthor {
+    /// Set the url of the author
+    #[must_use]
+    pub fn url(mut self, url: impl Into<String>) -> Self {
+        self.url = Some(url.into());
+        self
+    }
+
+    /// Set the icon url of the author
+    #[must_use]
+    pub fn icon_url(mut self, icon_url: impl Into<String>) -> Self {
+        self.icon_url = Some(icon_url.into());
+        self
+    }
+}
+
+impl From<String> for EmbedAuthor {
+    fn from(name: String) -> Self {
+        Self {
+            name,
+            url: None,
+            icon_url: None,
+        }
+    }
+}
+
+impl From<&str> for EmbedAuthor {
+    fn from(name: &str) -> Self {
+        Self {
+            name: name.to_owned(),
+            url: None,
+            icon_url: None,
+        }
+    }
+}
+
 /// Embed field
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct EmbedField {
@@ -75,17 +120,57 @@ pub struct EmbedField {
     /// Value of the field
     pub value: String,
     /// Whether or not this field should be inline
+    #[serde(default)]
     pub inline: bool,
+}
+
+impl EmbedField {
+    /// Construct new embed field
+    /// Name and text are required
+    #[must_use]
+    pub fn new(name: impl Into<String>, text: impl Into<String>) -> Self {
+        Self {
+            name: name.into(),
+            value: text.into(),
+            inline: false,
+        }
+    }
+
+    /// Set whether or not this field should be inline
+    #[must_use]
+    pub fn inline(mut self, inline: bool) -> Self {
+        self.inline = inline;
+        self
+    }
 }
 
 /// A guilded embed
 ///
-/// Recommended way of creating an embed is using the struct default syntax like this:
+/// # Example of all embed fields
 /// ```rust
-/// let embed = Embed {
-///     title: Some("hello world".to_owned()),
-///     ..default()
-/// };
+/// vived::Embed::new()
+///    .title("Hello world")
+///    .description("This is a test message")
+///    .color(0x00ff00)
+///    .url("https://www.guilded.gg")
+///    .timestamp(chrono::Utc::now())
+///    .footer(vived::EmbedFooter::from("This is a footer").icon_url(
+///        "https://img.guildedcdn.com/asset/DefaultUserAvatars/profile_1.png",
+///    ))
+///    .thumbnail("https://img.guildedcdn.com/asset/DefaultUserAvatars/profile_2.png")
+///    .image("https://img.guildedcdn.com/asset/DefaultUserAvatars/profile_3.png")
+///    .author(
+///        vived::EmbedAuthor::from("This is an author")
+///            .url("https://www.guilded.gg")
+///            .icon_url(
+///                "https://img.guildedcdn.com/asset/DefaultUserAvatars/profile_4.png",
+///            ),
+///    )
+///    // lets create two of each
+///    .field(vived::EmbedField::new("Field 1", "This is field 1"))
+///    .field(vived::EmbedField::new("Field 2", "This is field 2"))
+///    .field(vived::EmbedField::new("Field 3", "This is field 3").inline(true))
+///    .field(vived::EmbedField::new("Field 4", "This is field 4").inline(true)),
 /// ```
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
 #[serde(rename_all = "camelCase")]
@@ -156,8 +241,8 @@ impl Embed {
 
     /// Set the color of the embed
     #[must_use]
-    pub fn color(mut self, color: crate::Color) -> Self {
-        self.color = Some(color);
+    pub fn color(mut self, color: impl Into<crate::Color>) -> Self {
+        self.color = Some(color.into());
         self
     }
 

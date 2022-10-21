@@ -10,6 +10,7 @@ const BASE_URL: &str = "https://www.guilded.gg/api/v1";
 
 // TODO: implement embed, private, silent, and reply_message_ids
 
+
 /// Arguments passed as json to the guilded api
 #[derive(Serialize, Debug, Clone, Default)]
 pub struct MessageCreateArguments {
@@ -21,9 +22,11 @@ pub struct MessageCreateArguments {
     embeds: Option<Vec<Embed>>,
     /// Whether to send the message as a private message
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "isPrivate")]
     private: Option<bool>,
     /// Whether to send the message silently
     #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(rename = "isSilent")]
     silent: Option<bool>,
     /// Message ids to reply to
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -41,11 +44,30 @@ pub struct MessageCreate {
 }
 
 impl MessageCreate {
+    // we make two constructors so we can enforce that at least embed or content is given
+    // you can add both by adding the missing one with the corresponding method
+
     /// Create a new message create instruction for the given channel.
-    pub fn new<I: Into<ChannelId>>(channel: I) -> Self {
+    /// With the given content
+    pub fn new_with_content(channel: impl Into<ChannelId>, content: impl Into<String>) -> Self {
         Self {
             channel: channel.into(),
-            arguments: MessageCreateArguments::default(),
+            arguments: MessageCreateArguments {
+                content: Some(content.into()),
+                ..Default::default()
+            },
+        }
+    }
+
+    /// Create a new message create instruction for the given channel.
+    /// With the given embed
+    pub fn new_with_embed(channel: impl Into<ChannelId>, embed: impl Into<Embed>) -> Self {
+        Self {
+            channel: channel.into(),
+            arguments: MessageCreateArguments {
+                embeds: Some(vec![embed.into()]),
+                ..Default::default()
+            },
         }
     }
 

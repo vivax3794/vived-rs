@@ -10,18 +10,14 @@ async fn main() {
     let client = Client::new(TOKEN);
 
     // Send startup embed message
-    let resulting_message = client
+    let msg = client
         .make_request(
-            MessageCreate::new(TEST_CHANNEL_ID)
-                .embed(
-                    vived::Embed::new()
-                        // .title("Hello, world!")
-                        // .description("This is a test embed")
-                        // .color(vived::Color::from(0x00FF00)),
-                )
+            MessageCreate::new_with_embed(
+                TEST_CHANNEL_ID,
+                vived::Embed::new().description("test test <@dVBx8aZd>"),
+            )
         )
         .await
         .unwrap();
-    
-    dbg!(resulting_message.created_by.clone().into_enum());
+    dbg!(msg);
 }

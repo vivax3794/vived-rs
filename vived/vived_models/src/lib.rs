@@ -46,6 +46,6 @@ pub mod embed;
 pub mod color;
 
 pub use message::Message;
-pub use embed::Embed;
 pub use color::Color;
 pub use ids::*;
+pub use embed::*;

@@ -30,10 +30,46 @@ impl MessageType {
     }
 }
 
-/// Who was mentioned in a message
-#[readonly::make]
-#[derive(Deserialize, Debug, Default, Clone)]
+// The api lists mention ids using {id: ...} so we need to convert from that
+
+/// Wraps an id in a objects
+#[derive(Deserialize, Debug, Clone)]
+struct WrappedId<T> {
+    /// The id
+    id: T,
+}
+
+/// Raw mentions
+#[derive(Deserialize, Default, Debug, Clone)]
 #[serde(default)]
+struct RawMentions {
+    /// The mentioned users
+    users: Vec<WrappedId<crate::UserId>>,
+    /// The mentioned channels
+    channels: Vec<WrappedId<crate::ChannelId>>,
+    /// The mentioned roles
+    roles: Vec<WrappedId<crate::RoleId>>,
+    /// Everyone was mentioned
+    everyone: bool,
+    /// Here was mentioned
+    here: bool,
+}
+
+impl From<RawMentions> for Mentions {
+    fn from(raw: RawMentions) -> Self {
+        Self {
+            users: raw.users.into_iter().map(|x| x.id).collect(),
+            channels: raw.channels.into_iter().map(|x| x.id).collect(),
+            roles: raw.roles.into_iter().map(|x| x.id).collect(),
+            everyone: raw.everyone,
+            here: raw.here,
+        }
+    }
+}
+
+/// Who was mentioned in a message
+#[derive(Deserialize, Debug, Default, Clone)]
+#[serde(from = "RawMentions")]
 pub struct Mentions {
     /// What users were mentioned
     pub users: Vec<crate::UserId>,
@@ -56,7 +92,6 @@ pub struct Mentions {
 /// 
 /// I did try to make this deserialize into that automatically,
 /// but because of limitations on serde flatten we cant 
-#[readonly::make]
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CreatedByRawFields {
@@ -117,7 +152,6 @@ impl CreatedBy {
 }
 
 /// A guilded message!
-#[readonly::make]
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Message {

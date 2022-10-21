@@ -89,10 +89,10 @@ pub trait Endpoint<R> {
 /// This means that you could just do a while true loop and spam its methods and it will make sure you don't get ratelimited.
 /// THO! sending 100 requests without triggering a ratelimit is gonna take around 90 seconds :P
 /// so like don't if you don't actually need
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Client {
     /// The `reqwest` client to use
-    client: Arc<RwLock<reqwest::Client>>,
+    client: RwLock<reqwest::Client>,
     /// This is used to keep the number of concurrent tasks within a specific amount
     sem: Arc<Semaphore>,
     /// Has a ratelimit been hit?
@@ -145,7 +145,7 @@ impl Client {
 
         Self {
             sem: Arc::new(Semaphore::new(CONCURRENT_REQUEST)),
-            client: Arc::new(RwLock::new(client)),
+            client: RwLock::new(client),
             ratelimit_lock_active: Arc::new(RwLock::new(false)),
             ratelimit_unlocked_notification: Arc::new(Notify::new()),
         }
@@ -241,11 +241,24 @@ impl Client {
         E: Endpoint<R>,
     {
         self.handle_ratelimit(|| async {
-            let request = builder.build(&*Arc::clone(&self.client).read_owned().await);
+            let client = self.client.read().await;
+            let request = builder.build(&client).build().expect("invalid request");
 
-            trace!("making request: {:?}", request);
+            let body_bytes = request
+                .body()
+                .expect("should have body")
+                .as_bytes()
+                .expect("expected bytes");
+            let body_string = String::from_utf8_lossy(body_bytes);
 
-            let res = request.send().await;
+            trace!(
+                "making request:\nURL: {}\nHEADERS: {:#?}\nBODY: {}",
+                request.url(),
+                request.headers(),
+                body_string
+            );
+
+            let res = client.execute(request).await;
 
             let res = match res {
                 Ok(value) => value,
