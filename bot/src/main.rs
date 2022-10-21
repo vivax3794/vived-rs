@@ -13,9 +13,15 @@ async fn main() {
     let resulting_message = client
         .make_request(
             MessageCreate::new(TEST_CHANNEL_ID)
+                .with_embed(
+                    vived::Embed::new()
+                        // .title("Hello, world!")
+                        // .description("This is a test embed")
+                        // .color(vived::Color::from(0x00FF00)),
+                )
         )
         .await
         .unwrap();
     
-    dbg!(resulting_message);
+    dbg!(resulting_message.created_by.clone().into_enum());
 }

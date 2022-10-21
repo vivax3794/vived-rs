@@ -76,6 +76,14 @@ pub enum CreatedBy {
     User(crate::UserId),
 }
 
+impl CreatedByRawFields {
+    /// Convert this to the `CreatedBy` enum
+    #[must_use]
+    pub fn into_enum(self) -> CreatedBy {
+        self.into()
+    }
+}
+
 impl From<CreatedByRawFields> for CreatedBy {
     fn from(raw: CreatedByRawFields) -> Self {
         if let Some(webhook_id) = raw.created_by_webhook_id {

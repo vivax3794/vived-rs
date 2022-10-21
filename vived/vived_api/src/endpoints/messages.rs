@@ -1,7 +1,6 @@
 //! <https://www.guilded.gg/docs/api/chat/ChatMessage>
 
-use serde::Deserialize;
-use serde_json::json;
+use serde::{Deserialize, Serialize};
 use vived_models::{ChannelId, Message, Embed};
 
 use crate::Endpoint;
@@ -49,17 +48,29 @@ impl MessageCreate {
 
 impl Endpoint<Message> for MessageCreate {
     fn build(&self, client: &reqwest::Client) -> reqwest::RequestBuilder {
+        /// Arguments passed as json to the guilded api
+        #[derive(Serialize)]
+        pub struct MessageCreateArguments {
+            /// Content to send
+            #[serde(skip_serializing_if = "Option::is_none")]
+            content: Option<String>,
+            /// Embeds to send
+            #[serde(skip_serializing_if = "Option::is_none")]
+            embeds: Option<Vec<Embed>>,
+        }
         client
             .post(format!(
                 "{BASE_URL}/channels/{id}/messages",
                 id = self.channel
             ))
-            .json(&json!({
-                "content": self.content,
-                "embeds": self.embeds,
-            }))
+            .json(&MessageCreateArguments {
+                content: self.content.clone(),
+                embeds: self.embeds.clone(),
+            })
     }
 
+    /// # Errors
+    /// - if the json is invalid or doesn't match the schema
     fn from_raw(raw: &str) -> Result<Message, serde_json::Error> {
         /// Response from the message create endpoint
         #[derive(Deserialize, Debug)]
