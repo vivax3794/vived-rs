@@ -134,14 +134,14 @@ pub trait Endpoint<R> {
 /// THO! sending 100 requests without triggering a ratelimit is gonna take around 90 seconds :P
 /// so like don't if you don't actually need
 #[derive(Debug)]
-pub struct Client {
+pub struct ApiClient {
     /// The `reqwest` client to use
     client: RwLock<reqwest::Client>,
     /// This is used to keep the number of concurrent tasks within a specific amount
     sem: Arc<Semaphore>,
 }
 
-impl Client {
+impl ApiClient {
     /// Create a new api client using the provided token
     ///
     /// # Errors

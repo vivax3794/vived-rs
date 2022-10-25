@@ -39,4 +39,4 @@
 mod client;
 pub mod endpoints;
 
-pub use client::{ApiError, Client, Endpoint, GuildedError};
+pub use client::{ApiError, ApiClient, Endpoint, GuildedError};

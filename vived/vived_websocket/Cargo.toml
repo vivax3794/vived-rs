@@ -6,6 +6,17 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tokio-tungstenite = "0.17"
+vived_models = { path = "../vived_models" }
+log = {workspace = true}
+
+tokio = {workspace = true, features = ["sync"] }
+futures-util = "0.3"
+
+tokio-tungstenite = {version = "0.17", features = ["rustls-tls-native-roots"]}
 httparse = "1.8"
-tokio-tungstenite-keepalive = "0.1.0"
+
+serde = {workspace = true, features = ["derive"]}
+serde_json = {workspace = true}
+
+rustc_version_runtime = "0.1.*"
+version = "3.0"
