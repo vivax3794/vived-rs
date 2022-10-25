@@ -9,6 +9,8 @@ edition = "2021"
 vived_models = {path = "../vived_models"}
 
 log = {workspace = true}
+# We could replace the large tokio with async_lock
+# BUT reqwest already uses tokio, so we actually save entires in the dependency tree
 tokio = {workspace = true, features = ["sync"]}
 reqwest = {version = "0.11", features = ["json"]}
 

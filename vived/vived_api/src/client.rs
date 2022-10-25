@@ -3,7 +3,7 @@
 use serde::Deserialize;
 use std::sync::Arc;
 use std::{future::Future, time::Duration};
-use tokio::sync::{Notify, RwLock, Semaphore};
+use tokio::sync::{RwLock, Semaphore};
 
 use log::{debug, error, info, trace, warn};
 
@@ -24,6 +24,23 @@ enum ApiResultAction<R> {
     RetryWithBackoff,
 }
 
+// Make conversion from ApiError to ApiResultAction easy
+impl<T> From<ApiError> for ApiResultAction<Result<T, ApiError>> {
+    fn from(value: ApiError) -> Self {
+        Self::Return(Err(value))
+    }
+}
+
+/// Return from the current function if this is an error
+macro_rules! ret_error {
+    ($expr:expr) => {
+        match $expr {
+            Ok(value) => value,
+            Err(err) => return ApiResultAction::from(ApiError::from(err)),
+        }
+    };
+}
+
 /// A error description
 #[derive(Deserialize, Debug)]
 pub struct GuildedError {
@@ -38,8 +55,12 @@ pub struct GuildedError {
 /// An error that can be produced during the course of making a request
 #[derive(Debug)]
 pub enum ApiError {
+    /// Other non-specific error
+    ///
+    /// These are errors that happen in very specific cases, and are not covered by the other variants
+    Other(String),
     /// The library does not have a specific case for this error
-    Unknown(reqwest::Error),
+    Request(reqwest::Error),
     /// And error occurred with parsing the returned json data
     /// This will also produce a `debug` log with the raw content data
     JsonError(serde_json::Error),
@@ -61,13 +82,36 @@ impl From<serde_json::Error> for ApiError {
 
 impl From<reqwest::Error> for ApiError {
     fn from(v: reqwest::Error) -> Self {
-        Self::Unknown(v)
+        Self::Request(v)
     }
 }
 
 impl<R> From<R> for ApiResultAction<R> {
     fn from(v: R) -> Self {
         Self::Return(v)
+    }
+}
+
+impl From<String> for ApiError {
+    fn from(v: String) -> Self {
+        Self::Other(v)
+    }
+}
+
+impl From<&str> for ApiError {
+    fn from(v: &str) -> Self {
+        Self::Other(v.to_owned())
+    }
+}
+
+impl std::fmt::Display for ApiError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match *self {
+            Self::Other(ref s) => write!(f, "error: {s}"),
+            Self::Request(ref e) => write!(f, "Request error: {e}"),
+            Self::JsonError(ref e) => write!(f, "Json error: {e}"),
+            Self::Guilded(ref e) => write!(f, "Guilded error: {}", e.message),
+        }
     }
 }
 
@@ -100,13 +144,12 @@ pub struct Client {
 impl Client {
     /// Create a new api client using the provided token
     ///
-    /// # Panics
+    /// # Errors
     /// if provided token contains invalid chars
     ///
     /// or if there is an error constructing the reqwest client, which can happen
     /// when there is no resolver or tls backend found on the system.
-    #[must_use]
-    pub fn new(token: &str) -> Self {
+    pub fn new(token: &str) -> Result<Self, ApiError> {
         let user_agent = format!(
             "library: vived, version: {}, rustc version: {}",
             version::version!(),
@@ -128,23 +171,26 @@ impl Client {
             reqwest::header::AUTHORIZATION,
             format!("Bearer {token}")
                 .parse()
-                .expect("Invalid characters in provided token"),
+                .map_err(|err: reqwest::header::InvalidHeaderValue| err.to_string())?,
         );
 
         let client = reqwest::Client::builder()
             .user_agent(user_agent)
             .default_headers(headers)
-            .build()
-            .expect("Error creating reqwest client");
+            .build()?;
 
-        Self {
+        Ok(Self {
             sem: Arc::new(Semaphore::new(CONCURRENT_REQUEST)),
             client: RwLock::new(client),
-        }
+        })
     }
 
     /// Handle ratelimits and retry logic
     /// operates on `ApiResultAction`
+    // The expects in this function actually panic on a closed Semaphore, which would be an invalid state for two reason:
+    // 1. The semaphore is only closed when the client is dropped, which means that the client is no longer valid
+    // 2. without the semaphore the client would be useless, as it would not be able to make any requests
+    #[allow(clippy::expect_used)]
     async fn handle_ratelimit<C, F, R>(&self, closure: C) -> R
     where
         C: Fn() -> F,
@@ -170,7 +216,9 @@ impl Client {
 
                     lockdown_permits = Some(
                         Arc::clone(&self.sem)
-                            .acquire_many_owned(self.sem.available_permits() as u32)
+                            .acquire_many_owned(
+                                self.sem.available_permits().try_into().unwrap_or(u32::MAX),
+                            )
                             .await
                             .expect("Ratelimiter semaphore has been closed unexpectedly"),
                     );
@@ -185,9 +233,11 @@ impl Client {
 
                     lockdown_permits = Some(
                         Arc::clone(&self.sem)
-                            .acquire_many_owned(self.sem.available_permits() as u32)
+                            .acquire_many_owned(
+                                self.sem.available_permits().try_into().unwrap_or(u32::MAX),
+                            )
                             .await
-                            .expect("Ratelimiter semaphore has been closed unexpectedly")
+                            .expect("Ratelimiter semaphore has been closed unexpectedly"),
                     );
 
                     tokio::time::sleep(Duration::from_secs(backoff_amount)).await;
@@ -211,12 +261,6 @@ impl Client {
         result
     }
 
-    // Api?
-    // * client.make_request(SomeBuilder::new().with_thing(abc)).await?;
-    // ? what happens if a user calls build / send, themselves?
-    // * they cant, because builder should need `Client` access, and we don't provide that
-    // * if they do that manually they are just asking to mess up :P
-
     /// Make a request to the guilded api using the provided endpoint builder
     ///
     /// # Errors
@@ -230,7 +274,8 @@ impl Client {
     {
         self.handle_ratelimit(|| async {
             let client = self.client.read().await;
-            let request = builder.build(&client).build().expect("invalid request");
+
+            let request = ret_error!(builder.build(&client).build());
 
             debug!("making request");
             trace!("URL: {}", request.url());
@@ -247,13 +292,14 @@ impl Client {
 
             let res = match res {
                 Ok(value) => value,
-                Err(error) => return ApiResultAction::Return(Err(ApiError::Unknown(error))),
+                Err(error) => return ApiResultAction::Return(Err(ApiError::Request(error))),
             };
 
             let status = res.status();
 
             if status.is_success() {
-                let content = res.text().await.expect("response data was not valid text");
+                let content = ret_error!(res.text().await);
+
                 E::from_raw(&content)
                     .map_err(|err| {
                         error!("RESPONSE BODY: {}", content);
@@ -261,12 +307,12 @@ impl Client {
                     })
                     .into()
             } else if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
-                if let Some(wait_amount) = res.headers().get("Retry-After") {
-                    let wait_amount = wait_amount
-                        .to_str()
-                        .expect("Retry-After header was not valid text")
-                        .parse()
-                        .expect("Retry-After header value was not a valid number");
+                if let Some(wait_amount) = res
+                    .headers()
+                    .get("Retry-After")
+                    .and_then(|value| value.to_str().ok())
+                    .and_then(|value| value.parse().ok())
+                {
                     ApiResultAction::RetryAfter(wait_amount)
                 } else {
                     ApiResultAction::RetryWithBackoff
@@ -274,10 +320,7 @@ impl Client {
             } else {
                 // we could use the .json method, but we want access to the hole content in the event it isn't json
                 // (or our json scheme just isn't valid)
-                let content = res
-                    .text()
-                    .await
-                    .expect("Expected response content to be text");
+                let content = ret_error!(res.text().await);
                 ApiResultAction::Return(Err(match serde_json::from_str::<GuildedError>(&content) {
                     Ok(error) => ApiError::Guilded(error),
                     Err(error) => {

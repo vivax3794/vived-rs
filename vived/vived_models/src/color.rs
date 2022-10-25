@@ -24,6 +24,10 @@ impl From<Color> for (u8, u8, u8) {
 
 impl From<u32> for Color {
     // This is safe because of the bit shifting and bitwise and operations
+    // We would in a perfect world have used a u24 (3 * 8), but we don't have that
+    // so we use a u32 and just ignore the first 8 bits
+    // You could argue we should error if those bits are not 0, but we don't
+    #[allow(clippy::expect_used)]
     fn from(v: u32) -> Self {
         Self(
             ((v >> 16) & 0xFF).try_into().expect("u32 to u8 failed"),

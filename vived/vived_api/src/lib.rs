@@ -19,7 +19,7 @@
     clippy::unimplemented
 )]
 #![deny(
-    // clippy::expect_used,
+    clippy::expect_used,
     clippy::unwrap_used,
     clippy::fn_to_numeric_cast_any,
     clippy::get_unwrap,
