@@ -86,19 +86,47 @@ async fn event_loop(connection: WebStream, tx: broadcast::Sender<crate::events::
             }
         };
 
-        let event: crate::events::GuildedEvent = match serde_json::from_str(&message) {
-            Ok(event) => event,
+        let raw_event_data: serde_json::Value = match serde_json::from_str(&message) {
+            Ok(raw_event_data) => raw_event_data,
             Err(e) => {
-                log::error!("error deserializing event: {e}");
-                log::debug!("raw event: {message}");
+                log::error!("error deserializing event data: {}", e);
                 continue;
             }
         };
 
-        log::debug!("received event: {:?}", event);
+        let opcode = match raw_event_data.get("op").and_then(|v| v.as_u64()) {
+            Some(opcode) => opcode,
+            None => {
+                log::error!("received event without opcode");
+                continue;
+            }
+        };
 
-        if let Err(e) = tx.send(event) {
-            log::error!("error sending event: {}", e);
+        match opcode {
+            0 => {
+                let event: crate::events::GuildedEvent = match serde_json::from_str(&message) {
+                    Ok(event) => event,
+                    Err(e) => {
+                        log::error!("error deserializing event: {e}");
+                        log::debug!("raw event: {message}");
+                        continue;
+                    }
+                };
+
+                log::debug!("received event: {:?}", event);
+
+                if let Err(e) = tx.send(event) {
+                    log::error!("error sending event: {}", e);
+                }
+            }
+            1 => {
+                // TODO: Heartbeat? I don't actually know if this is handled by the library or the user 
+                // TODO: I didn't find anything when searching online
+            }
+            _ => {
+                log::error!("received unknown opcode: {}", opcode);
+                log::debug!("raw event: {message}");
+            }
         }
     }
 }

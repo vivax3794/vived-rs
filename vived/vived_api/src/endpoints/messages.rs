@@ -5,7 +5,6 @@ use vived_models::{ChannelId, MessageId, Embed, Message};
 
 use crate::Endpoint;
 
-/// Base url of the guilded api endpoints
 use super::BASE_URL;
 
 // TODO: implement embed, private, silent, and reply_message_ids

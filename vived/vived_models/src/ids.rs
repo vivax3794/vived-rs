@@ -39,6 +39,7 @@ define_string_id!(pub struct ChannelId(String));
 define_string_id!(pub struct MessageId(String));
 define_string_id!(pub struct UserId(String));
 define_string_id!(pub struct WebhookId(String));
+define_string_id!(pub struct GroupId(String));
 
 // For some reason RoleId uses a `usize` instead of a String
 // So we need to special case it

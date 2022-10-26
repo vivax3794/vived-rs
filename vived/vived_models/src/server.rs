@@ -65,3 +65,9 @@ impl Server {
         format!("https://www.guilded.gg/{}", self.url)
     }
 }
+
+impl From<Server> for crate::ServerId {
+    fn from(server: Server) -> Self {
+        server.id
+    }
+}

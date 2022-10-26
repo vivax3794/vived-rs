@@ -44,6 +44,7 @@ pub mod message;
 pub mod ids;
 pub mod embed;
 pub mod color;
+mod channel;
 mod server;
 
 pub use message::Message;
@@ -51,3 +52,4 @@ pub use color::Color;
 pub use ids::*;
 pub use embed::*;
 pub use server::*;
+pub use channel::*;

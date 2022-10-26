@@ -189,6 +189,8 @@ pub struct Message {
     /// Who sent this message?
     #[serde(flatten)]
     pub created_by: CreatedByRawFields,
+    /// Updated at
+    pub updated_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 // You should be able to construct ids from the objects
