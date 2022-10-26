@@ -6,7 +6,7 @@ use vived_models::{ChannelId, MessageId, Embed, Message};
 use crate::Endpoint;
 
 /// Base url of the guilded api endpoints
-const BASE_URL: &str = "https://www.guilded.gg/api/v1";
+use super::BASE_URL;
 
 // TODO: implement embed, private, silent, and reply_message_ids
 
@@ -66,6 +66,21 @@ impl MessageCreate {
             arguments: MessageCreateArguments {
                 embeds: Some(vec![embed.into()]),
                 ..Default::default()
+            },
+        }
+    }
+
+    /// Create a new message create instruction based on a message object
+    pub fn new_from_message(channel: Option<impl Into<ChannelId>>, message: Message) -> Self {
+        let channel = channel.map_or(message.channel_id, Into::into);
+        Self {
+            channel,
+            arguments: MessageCreateArguments {
+                content: message.content,
+                embeds: Some(message.embeds),
+                private: Some(message.is_private),
+                silent: Some(message.is_silent),
+                reply_message_ids: message.reply_message_ids,
             },
         }
     }
